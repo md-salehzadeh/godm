@@ -33,10 +33,9 @@ type Query struct {
 // BatchSize sets the value for the BatchSize field.
 // Means the maximum number of documents to be included in each batch returned by the server.
 func (q *Query) BatchSize(n int64) QueryI {
-	newQ := q
-	newQ.batchSize = &n
+	q.batchSize = &n
 
-	return newQ
+	return q
 }
 
 // Sort is Used to set the sorting rules for the returned results
