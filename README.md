@@ -1,10 +1,8 @@
 # Godm
 
-`Godm` is a `Go` `driver` for `MongoDB` . It is based on [MongoDB official driver](https://github.com/mongodb/mongo-go-driver), but easier to use like [mgo](https://github.com/go-mgo/mgo) (such as the chain call). 
+`Godm` is a `Go` `driver` for `MongoDB` . It is based on [MongoDB official driver](https://github.com/mongodb/mongo-go-driver), but easier to use.
 
 - `Godm` allows users to use the new features of `MongoDB` in a more elegant way.
-
-- `Godm` is the first choice for migrating from `mgo` to the new `MongoDB driver` with minimal code changes.
 
 ## Requirements
 
@@ -359,15 +357,3 @@ cli.Find(ctx, bson.M{"age": 6}).Sort("weight").Limit(7).All(&batch)
 // find all, sort and limit
 coll.Find(bson.M{"age": 6}).Sort("weight").Limit(7).All(&batch)
 ```
-
-## `godm` vs `mgo`
-[Differences between godm and mgo](https://github.com/md-salehzadeh/godm/wiki/Differences-between-godm-and-Mgo)
- 
-## Contributing
-
-The Godm project welcomes all contributors. We appreciate your help! 
-
-## Communication:
-
-- Join [godm discussions](https://github.com/md-salehzadeh/godm/discussions)
-
