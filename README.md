@@ -328,7 +328,7 @@ Or
     
 ## `Godm` vs `go.mongodb.org/mongo-driver`
 
-Below we give an example of multi-file search、sort and limit to illustrate the similarities between `godm` and `mgo` and the improvement compare to `go.mongodb.org/mongo-driver`.
+Below we give an example of multi-file search、sort and limit to illustrate the improvement compare to `go.mongodb.org/mongo-driver`.
 How do we do in`go.mongodb.org/mongo-driver`:
 
 ```go
@@ -345,15 +345,11 @@ cur, err := coll.Find(ctx, bson.M{"age": 6}, findOptions)
 cur.All(ctx, &batch)
 ```
 
-How do we do in `godm` and `mgo`:
+How do we do in `godm`:
 
 ```go
 // godm
 // find all, sort and limit
 batch := []UserInfo{}
 cli.Find(ctx, bson.M{"age": 6}).Sort("weight").Limit(7).All(&batch)
-
-// mgo
-// find all, sort and limit
-coll.Find(bson.M{"age": 6}).Sort("weight").Limit(7).All(&batch)
 ```

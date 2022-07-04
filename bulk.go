@@ -39,7 +39,7 @@ type BulkResult struct {
 // Individual operations inside a bulk do not trigger middlewares or hooks
 // at present.
 //
-// Different from original mgo, the godm implementation of Bulk does not emulate
+// the godm implementation of Bulk does not emulate
 // bulk operations individually on old versions of MongoDB servers that do not
 // natively support bulk operations.
 //
@@ -164,11 +164,10 @@ func (b *Bulk) Run(ctx context.Context) (*BulkResult, error) {
 	result, err := b.coll.collection.BulkWrite(ctx, b.queue, &opts)
 
 	if err != nil {
-		// In original mgo, queue is not reset in case of error.
 		return nil, err
 	}
 
-	// Empty the queue for possible reuse, as per mgo's behavior.
+	// Empty the queue for possible reuse.
 	b.queue = nil
 
 	return &BulkResult{

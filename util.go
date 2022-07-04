@@ -15,7 +15,6 @@ func Now() time.Time {
 }
 
 // NewObjectID generates a new ObjectID.
-// Watch out: the way it generates objectID is different from mgo
 func NewObjectID() primitive.ObjectID {
 	return primitive.NewObjectID()
 }
