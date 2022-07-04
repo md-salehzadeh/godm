@@ -7,7 +7,7 @@ import (
 
 	"github.com/md-salehzadeh/godm/middleware"
 	"github.com/md-salehzadeh/godm/operator"
-	qOpts "github.com/md-salehzadeh/godm/options"
+	gOpts "github.com/md-salehzadeh/godm/options"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -26,7 +26,7 @@ type Query struct {
 
 	ctx        context.Context
 	collection *mongo.Collection
-	opts       []qOpts.FindOptions
+	opts       []gOpts.FindOptions
 	registry   *bsoncodec.Registry
 }
 
