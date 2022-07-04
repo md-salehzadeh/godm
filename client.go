@@ -1,17 +1,4 @@
-/*
- Copyright 2020 The Qmgo Authors.
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-     http://www.apache.org/licenses/LICENSE-2.0
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
-package qmgo
+package godm
 
 import (
 	"context"
@@ -20,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qiniu/qmgo/options"
+	"github.com/md-salehzadeh/godm/options"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -97,16 +84,16 @@ type ReadPref struct {
 	Mode readpref.Mode `json:"mode"`
 }
 
-// QmgoClient specifies the instance to operate mongoDB
-type QmgoClient struct {
+// GodmClient specifies the instance to operate mongoDB
+type GodmClient struct {
 	*Collection
 	*Database
 	*Client
 }
 
 // Open creates client instance according to config
-// QmgoClient can operates all qmgo.client 、qmgo.database and qmgo.collection
-func Open(ctx context.Context, conf *Config, o ...options.ClientOptions) (cli *QmgoClient, err error) {
+// GodmClient can operates all godm.client 、godm.database and godm.collection
+func Open(ctx context.Context, conf *Config, o ...options.ClientOptions) (cli *GodmClient, err error) {
 	client, err := NewClient(ctx, conf, o...)
 	if err != nil {
 		fmt.Println("new client fail", err)
@@ -116,7 +103,7 @@ func Open(ctx context.Context, conf *Config, o ...options.ClientOptions) (cli *Q
 	db := client.Database(conf.Database)
 	coll := db.Collection(conf.Coll)
 
-	cli = &QmgoClient{
+	cli = &GodmClient{
 		Client:     client,
 		Database:   db,
 		Collection: coll,
@@ -133,7 +120,7 @@ type Client struct {
 	registry *bsoncodec.Registry
 }
 
-// NewClient creates Qmgo MongoDB client
+// NewClient creates Godm MongoDB client
 func NewClient(ctx context.Context, conf *Config, o ...options.ClientOptions) (cli *Client, err error) {
 	opt, err := newConnectOpts(conf, o...)
 	if err != nil {
@@ -170,7 +157,7 @@ func client(ctx context.Context, opt *opts.ClientOptions) (client *mongo.Client,
 }
 
 // newConnectOpts creates client options from conf
-// Qmgo will follow this way official mongodb driver do：
+// Godm will follow this way official mongodb driver do：
 // - the configuration in uri takes precedence over the configuration in the setter
 // - Check the validity of the configuration in the uri, while the configuration in the setter is basically not checked
 func newConnectOpts(conf *Config, o ...options.ClientOptions) (*opts.ClientOptions, error) {
@@ -315,9 +302,9 @@ func (c *Client) Session(opt ...*options.SessionOptions) (*Session, error) {
 // At the same time, please pay attention to the following
 // - make sure all operations in callback use the sessCtx as context parameter
 // - if operations in callback takes more than(include equal) 120s, the operations will not take effect,
-// - if operation in callback return qmgo.ErrTransactionRetry,
+// - if operation in callback return godm.ErrTransactionRetry,
 //   the whole transaction will retry, so this transaction must be idempotent
-// - if operations in callback return qmgo.ErrTransactionNotSupported,
+// - if operations in callback return godm.ErrTransactionNotSupported,
 // - If the ctx parameter already has a Session attached to it, it will be replaced by this session.
 func (c *Client) DoTransaction(ctx context.Context, callback func(sessCtx context.Context) (interface{}, error), opts ...*options.TransactionOptions) (interface{}, error) {
 	if !c.transactionAllowed() {

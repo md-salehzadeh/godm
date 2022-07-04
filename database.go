@@ -1,22 +1,9 @@
-/*
- Copyright 2020 The Qmgo Authors.
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-     http://www.apache.org/licenses/LICENSE-2.0
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
-package qmgo
+package godm
 
 import (
 	"context"
 
-	opts "github.com/qiniu/qmgo/options"
+	opts "github.com/md-salehzadeh/godm/options"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -72,11 +59,11 @@ func (d *Database) RunCommand(ctx context.Context, runCommand interface{}, opts 
 // The opts parameter can be used to specify options for the operation (see the options.CreateCollectionOptions
 // documentation).
 func (db *Database) CreateCollection(ctx context.Context, name string, opts ...opts.CreateCollectionOptions) error {
-	var option  = make([]*options.CreateCollectionOptions,0,len(opts))
-	for _,opt := range opts{
-		if opt.CreateCollectionOptions != nil{
-			option = append(option,opt.CreateCollectionOptions)
+	var option = make([]*options.CreateCollectionOptions, 0, len(opts))
+	for _, opt := range opts {
+		if opt.CreateCollectionOptions != nil {
+			option = append(option, opt.CreateCollectionOptions)
 		}
 	}
-	return db.database.CreateCollection(ctx,name,option...)
+	return db.database.CreateCollection(ctx, name, option...)
 }

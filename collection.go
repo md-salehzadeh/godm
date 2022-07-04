@@ -1,17 +1,4 @@
-/*
- Copyright 2020 The Qmgo Authors.
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-     http://www.apache.org/licenses/LICENSE-2.0
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
-package qmgo
+package godm
 
 import (
 	"context"
@@ -19,9 +6,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/qiniu/qmgo/middleware"
-	"github.com/qiniu/qmgo/operator"
-	opts "github.com/qiniu/qmgo/options"
+	"github.com/md-salehzadeh/godm/middleware"
+	"github.com/md-salehzadeh/godm/operator"
+	opts "github.com/md-salehzadeh/godm/options"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -132,7 +119,7 @@ func interfaceToSliceInterface(docs interface{}) []interface{} {
 // The replacement parameter must be a document that will be used to replace the selected document. It cannot be nil
 // and cannot contain any update operators
 // Reference: https://docs.mongodb.com/manual/reference/operator/update/
-// If replacement has "_id" field and the document is existed, please initial it with existing id(even with Qmgo default field feature).
+// If replacement has "_id" field and the document is existed, please initial it with existing id(even with godm default field feature).
 // Otherwise, "the (immutable) field '_id' altered" error happens.
 func (c *Collection) Upsert(ctx context.Context, filter interface{}, replacement interface{}, opts ...opts.UpsertOptions) (result *UpdateResult, err error) {
 	h := replacement
@@ -562,7 +549,7 @@ func (c *Collection) Watch(ctx context.Context, pipeline interface{}, opts ...*o
 	return c.collection.Watch(ctx, pipeline, changeStreamOption)
 }
 
-// translateUpdateResult translates mongo update result to qmgo define UpdateResult
+// translateUpdateResult translates mongo update result to godm define UpdateResult
 func translateUpdateResult(res *mongo.UpdateResult) (result *UpdateResult) {
 	result = &UpdateResult{
 		MatchedCount:  res.MatchedCount,

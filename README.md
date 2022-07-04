@@ -1,19 +1,10 @@
-# Qmgo 
+# Godm
 
-[![Build Status](https://travis-ci.org/qiniu/qmgo.png?branch=master)](https://travis-ci.org/qiniu/qmgo)
-[![Coverage Status](https://codecov.io/gh/qiniu/qmgo/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/qmgo)
-[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qmgo)](https://goreportcard.com/report/github.com/qiniu/qmgo)
-[![GitHub release](https://img.shields.io/github/v/tag/qiniu/qmgo.svg?label=release)](https://github.com/qiniu/qmgo/releases)
-[![GoDoc](https://pkg.go.dev/badge/github.com/qiniu/qmgo?status.svg)](https://pkg.go.dev/github.com/qiniu/qmgo?tab=doc) 
-[![Join the chat at https://gitter.im/qiniu/qmgo](https://badges.gitter.im/qiniu/qmgo.svg)](https://gitter.im/qiniu/qmgo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+`Godm` is a `Go` `driver` for `MongoDB` . It is based on [MongoDB official driver](https://github.com/mongodb/mongo-go-driver), but easier to use like [mgo](https://github.com/go-mgo/mgo) (such as the chain call). 
 
-English | [简体中文](README_ZH.md)
+- `Godm` allows users to use the new features of `MongoDB` in a more elegant way.
 
-`Qmgo` is a `Go` `driver` for `MongoDB` . It is based on [MongoDB official driver](https://github.com/mongodb/mongo-go-driver), but easier to use like [mgo](https://github.com/go-mgo/mgo) (such as the chain call). 
-
-- `Qmgo` allows users to use the new features of `MongoDB` in a more elegant way.
-
-- `Qmgo` is the first choice for migrating from `mgo` to the new `MongoDB driver` with minimal code changes.
+- `Godm` is the first choice for migrating from `mgo` to the new `MongoDB driver` with minimal code changes.
 
 ## Requirements
 
@@ -34,11 +25,11 @@ English | [简体中文](README_ZH.md)
 
 ## Installation
 
-- Use `go mod` to automatically install dependencies by `import github.com/qiniu/qmgo`
+- Use `go mod` to automatically install dependencies by `import github.com/md-salehzadeh/godm`
 
 Or 
 
-- Use `go get github.com/qiniu/qmgo`
+- Use `go get github.com/md-salehzadeh/godm`
 
 ## Usage
 
@@ -49,11 +40,11 @@ Or
     import (
         "context"
       
-        "github.com/qiniu/qmgo"
+        "github.com/md-salehzadeh/godm"
     )
     
     ctx := context.Background()
-    client, err := qmgo.NewClient(ctx, &qmgo.Config{Uri: "mongodb://localhost:27017"})
+    client, err := godm.NewClient(ctx, &godm.Config{Uri: "mongodb://localhost:27017"})
     db := client.Database("class")
     coll := db.Collection("user")
     ```
@@ -61,7 +52,7 @@ Or
     All operations can be based on `cli`:
     
     ```go
-    cli, err := qmgo.Open(ctx, &qmgo.Config{Uri: "mongodb://localhost:27017", Database: "class", Coll: "user"})
+    cli, err := godm.Open(ctx, &godm.Config{Uri: "mongodb://localhost:27017", Database: "class", Coll: "user"})
     ```
     
     ***The following examples will be based on `cli`, if you use the first way for initialization, replace `cli` with `client`、`db` or `coll`***
@@ -209,7 +200,7 @@ Or
     }
     result, err = cli.DoTransaction(ctx, callback)
     ````
-    [More about transaction](https://github.com/qiniu/qmgo/wiki/Transactions)
+    [More about transaction](https://github.com/md-salehzadeh/godm/wiki/Transactions)
 
 - Predefine operator keys
 
@@ -223,7 +214,7 @@ Or
 
 - Hooks
 
-    Qmgo flexible hooks:
+    Godm flexible hooks:
 
     ````go
     type User struct {
@@ -242,15 +233,15 @@ Or
     u := &User{Name: "Alice", Age: 7}
     _, err := cli.InsertOne(context.Background(), u)
     ````
-    [More about hooks](https://github.com/qiniu/qmgo/wiki/Hooks)
+    [More about hooks](https://github.com/md-salehzadeh/godm/wiki/Hooks)
 
 - Automatically fields
 
-    Qmgo support two ways to make specific fields automatically update in specific API
+    Godm support two ways to make specific fields automatically update in specific API
    
     - Default fields
     
-    Inject `field.DefaultField` in document struct, Qmgo will update `createAt`、`updateAt` and `_id` in update and insert operation.
+    Inject `field.DefaultField` in document struct, Godm will update `createAt`、`updateAt` and `_id` in update and insert operation.
     
     ````go
     type User struct {
@@ -267,7 +258,7 @@ Or
 
     - Custom fields
     
-    Define the custom fields, Qmgo will update them in update and insert operation.
+    Define the custom fields, Godm will update them in update and insert operation.
 
     ```go
     type User struct {
@@ -292,15 +283,15 @@ Or
     // UpdateTimeAt will update
     ```
 
-    Check [examples here](https://github.com/qiniu/qmgo/blob/master/field_test.go)
+    Check [examples here](https://github.com/md-salehzadeh/godm/blob/master/field_test.go)
 
-    [More about automatically fields](https://github.com/qiniu/qmgo/wiki/Automatically-update-fields)
+    [More about automatically fields](https://github.com/md-salehzadeh/godm/wiki/Automatically-update-fields)
 
 - Validation tags
 
-    Qmgo Validation tags is Based on [go-playground/validator](https://github.com/go-playground/validator).
+    Godm Validation tags is Based on [go-playground/validator](https://github.com/go-playground/validator).
     
-    So Qmgo support [all validations on structs in go-playground/validator](https://github.com/go-playground/validator#usage-and-documentation), such as:
+    So Godm support [all validations on structs in go-playground/validator](https://github.com/go-playground/validator#usage-and-documentation), such as:
     
     ```go
     type User struct {
@@ -313,7 +304,7 @@ Or
     }
     ```
     
-    Qmgo tags only supported in following API：
+    Godm tags only supported in following API：
     ` InsertOne、InsertyMany、Upsert、UpsertId、ReplaceOne `
 
 - Plugin
@@ -328,18 +319,18 @@ Or
     
     - Call Register() in package middleware, register the method `Do`
     
-      Qmgo will call `Do` before and after the [operation](operator/operate_type.go)
+      Godm will call `Do` before and after the [operation](operator/operate_type.go)
       
     ```go
     middleware.Register(Do)
     ```
     [Example](middleware/middleware_test.go)
     
-    The `hook`、`automatically fields` and `validation tags` in Qmgo run on **plugin**.
+    The `hook`、`automatically fields` and `validation tags` in Godm run on **plugin**.
     
-## `Qmgo` vs `go.mongodb.org/mongo-driver`
+## `Godm` vs `go.mongodb.org/mongo-driver`
 
-Below we give an example of multi-file search、sort and limit to illustrate the similarities between `qmgo` and `mgo` and the improvement compare to `go.mongodb.org/mongo-driver`.
+Below we give an example of multi-file search、sort and limit to illustrate the similarities between `godm` and `mgo` and the improvement compare to `go.mongodb.org/mongo-driver`.
 How do we do in`go.mongodb.org/mongo-driver`:
 
 ```go
@@ -356,10 +347,10 @@ cur, err := coll.Find(ctx, bson.M{"age": 6}, findOptions)
 cur.All(ctx, &batch)
 ```
 
-How do we do in `Qmgo` and `mgo`:
+How do we do in `godm` and `mgo`:
 
 ```go
-// qmgo
+// godm
 // find all, sort and limit
 batch := []UserInfo{}
 cli.Find(ctx, bson.M{"age": 6}).Sort("weight").Limit(7).All(&batch)
@@ -369,14 +360,14 @@ cli.Find(ctx, bson.M{"age": 6}).Sort("weight").Limit(7).All(&batch)
 coll.Find(bson.M{"age": 6}).Sort("weight").Limit(7).All(&batch)
 ```
 
-## `Qmgo` vs `mgo`
-[Differences between qmgo and mgo](https://github.com/qiniu/qmgo/wiki/Differences-between-Qmgo-and-Mgo)
+## `godm` vs `mgo`
+[Differences between godm and mgo](https://github.com/md-salehzadeh/godm/wiki/Differences-between-godm-and-Mgo)
  
 ## Contributing
 
-The Qmgo project welcomes all contributors. We appreciate your help! 
+The Godm project welcomes all contributors. We appreciate your help! 
 
 ## Communication:
 
-- Join [qmgo discussions](https://github.com/qiniu/qmgo/discussions)
+- Join [godm discussions](https://github.com/md-salehzadeh/godm/discussions)
 

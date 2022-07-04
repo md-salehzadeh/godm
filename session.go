@@ -1,22 +1,9 @@
-/*
- Copyright 2020 The Qmgo Authors.
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-     http://www.apache.org/licenses/LICENSE-2.0
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
-package qmgo
+package godm
 
 import (
 	"context"
 
-	opts "github.com/qiniu/qmgo/options"
+	opts "github.com/md-salehzadeh/godm/options"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/mongo/driver"
@@ -35,9 +22,9 @@ type Session struct {
 //- make sure all operations in callback use the sessCtx as context parameter
 //- Dont forget to call EndSession if session is not used anymore
 //- if operations in callback takes more than(include equal) 120s, the operations will not take effect,
-//- if operation in callback return qmgo.ErrTransactionRetry,
+//- if operation in callback return godm.ErrTransactionRetry,
 //  the whole transaction will retry, so this transaction must be idempotent
-//- if operations in callback return qmgo.ErrTransactionNotSupported,
+//- if operations in callback return godm.ErrTransactionNotSupported,
 //- If the ctx parameter already has a Session attached to it, it will be replaced by this session.
 func (s *Session) StartTransaction(ctx context.Context, cb func(sessCtx context.Context) (interface{}, error), opts ...*opts.TransactionOptions) (interface{}, error) {
 	transactionOpts := options.Transaction()
