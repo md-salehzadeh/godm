@@ -50,7 +50,7 @@ func (q *Query) Sort(fields ...string) QueryI {
 	}
 
 	for _, field := range fields {
-		key, sort := SplitSortField(field)
+		key, sort := ParseSortField(field)
 
 		if key == "" {
 			panic("Sort: empty field name")

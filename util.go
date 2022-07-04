@@ -22,7 +22,7 @@ func NewObjectID() primitive.ObjectID {
 // handle sort symbol: "asc"/"desc" at the end of field
 // if "asc"， return sort as 1
 // if "desc"， return sort as -1
-func SplitSortField(field string) (key string, sort int32) {
+func ParseSortField(field string) (key string, sort int32) {
 	sort = 1
 	key = field
 

@@ -504,9 +504,9 @@ func (c *Collection) ensureIndex(ctx context.Context, indexes []opts.IndexModel)
 		var keysDoc bsonx.Doc
 
 		for _, field := range idx.Key {
-			key, n := SplitSortField(field)
+			key, sort := ParseSortField(field)
 
-			keysDoc = keysDoc.Append(key, bsonx.Int32(n))
+			keysDoc = keysDoc.Append(key, bsonx.Int32(sort))
 		}
 
 		model = mongo.IndexModel{
@@ -610,7 +610,7 @@ func generateDroppedIndex(index []string) string {
 	var res string
 
 	for _, e := range index {
-		key, sort := SplitSortField(e)
+		key, sort := ParseSortField(e)
 
 		n := key + "_" + fmt.Sprint(sort)
 
