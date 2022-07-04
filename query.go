@@ -17,7 +17,7 @@ import (
 // Query struct definition
 type Query struct {
 	filter    interface{}
-	sort      interface{}
+	sort      bson.D
 	project   interface{}
 	hint      interface{}
 	limit     *int64
@@ -40,9 +40,9 @@ func (q *Query) BatchSize(n int64) QueryI {
 }
 
 // Sort is Used to set the sorting rules for the returned results
-// Format: "age" or "+age" means to sort the age field in ascending order, "-age" means in descending order
+// Format: "age" or "age asc" means to sort the age field in ascending order, "age desc" means in descending order
 // When multiple sort fields are passed in at the same time, they are arranged in the order in which the fields are passed in.
-// For example, {"age", "-name"}, first sort by age in ascending order, then sort by name in descending order
+// For example, {"age", "name desc"}, first sort by age in ascending order, then sort by name in descending order
 func (q *Query) Sort(fields ...string) QueryI {
 	if len(fields) == 0 {
 		// A nil bson.D will not correctly serialize, but this case is no-op
@@ -50,22 +50,17 @@ func (q *Query) Sort(fields ...string) QueryI {
 		return q
 	}
 
-	var sorts bson.D
-
 	for _, field := range fields {
-		key, n := SplitSortField(field)
+		key, sort := SplitSortField(field)
 
 		if key == "" {
 			panic("Sort: empty field name")
 		}
 
-		sorts = append(sorts, bson.E{Key: key, Value: n})
+		q.sort = append(q.sort, bson.E{Key: key, Value: sort})
 	}
 
-	newQ := q
-	newQ.sort = sorts
-
-	return newQ
+	return q
 }
 
 // Select is used to determine which fields are displayed or not displayed in the returned results
