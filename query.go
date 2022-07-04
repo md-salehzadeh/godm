@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/md-salehzadeh/godm/middleware"
 	"github.com/md-salehzadeh/godm/operator"
@@ -16,7 +17,7 @@ import (
 
 // Query struct definition
 type Query struct {
-	filter    interface{}
+	filter    bson.D
 	sort      bson.D
 	project   bson.D
 	hint      interface{}
@@ -34,6 +35,111 @@ type Query struct {
 // Means the maximum number of documents to be included in each batch returned by the server.
 func (q *Query) BatchSize(n int64) QueryI {
 	q.batchSize = &n
+
+	return q
+}
+
+func makeWhere(filters map[string]any) bson.D {
+	filter := bson.D{}
+
+	if len(filters) > 0 {
+		for field, value := range filters {
+			var _operator string
+			var keys []string
+
+			if strings.HasSuffix(field, " <") {
+				keys = []string{" <"}
+
+				_operator = operator.Lt
+			} else if strings.HasSuffix(field, " <=") {
+				keys = []string{" <="}
+
+				_operator = operator.Lte
+			} else if strings.HasSuffix(field, " >") {
+				keys = []string{" >"}
+
+				_operator = operator.Gt
+			} else if strings.HasSuffix(field, " >=") {
+				keys = []string{" >="}
+
+				_operator = operator.Gte
+			} else if strings.HasSuffix(field, " in") || strings.HasSuffix(field, " IN") {
+				keys = []string{" in", " IN"}
+
+				_operator = operator.In
+			} else if strings.HasSuffix(field, " not in") || strings.HasSuffix(field, " NOT IN") {
+				keys = []string{" not in", " NOT IN"}
+
+				_operator = operator.Nin
+			} else if strings.HasSuffix(field, " !=") || strings.HasSuffix(field, " <>") {
+				keys = []string{" !=", " <>"}
+
+				_operator = operator.Ne
+			} else {
+				_operator = operator.Eq
+			}
+
+			if len(keys) > 0 {
+				for _, key := range keys {
+					field = strings.Replace(field, key, "", -1)
+				}
+			}
+
+			field = strings.Trim(field, " ")
+
+			filter = append(filter, bson.E{field, bson.D{{_operator, value}}})
+		}
+	}
+
+	return filter
+}
+
+func (q *Query) Where(filters map[string]any) QueryI {
+	newFilter := makeWhere(filters)
+
+	q.filter = append(q.filter, newFilter...)
+
+	return q
+}
+
+func (q *Query) AndWhere(filters map[string]any) QueryI {
+	if q.filter == nil {
+		return q.Where(filters)
+	}
+
+	lastFilter := q.filter
+
+	newFilter := makeWhere(filters)
+
+	q.filter = bson.D{
+		{operator.And,
+			bson.A{
+				lastFilter,
+				newFilter,
+			},
+		},
+	}
+
+	return q
+}
+
+func (q *Query) OrWhere(filters map[string]any) QueryI {
+	if q.filter == nil {
+		return q.Where(filters)
+	}
+
+	lastFilter := q.filter
+
+	newFilter := makeWhere(filters)
+
+	q.filter = bson.D{
+		{operator.Or,
+			bson.A{
+				lastFilter,
+				newFilter,
+			},
+		},
+	}
 
 	return q
 }

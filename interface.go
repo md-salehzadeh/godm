@@ -34,6 +34,9 @@ type CursorI interface {
 
 // QueryI Query interface
 type QueryI interface {
+	Where(filters map[string]any) QueryI
+	AndWhere(filters map[string]any) QueryI
+	OrWhere(filters map[string]any) QueryI
 	Sort(fields ...string) QueryI
 	Select(fields ...string) QueryI
 	Skip(n int64) QueryI

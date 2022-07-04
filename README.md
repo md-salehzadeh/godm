@@ -6,7 +6,7 @@
 
 ## Requirements
 
--`Go 1.10` and above.
+-`Go 1.18` and above.
 
 -`MongoDB 2.6` and above.
 
