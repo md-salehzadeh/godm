@@ -18,8 +18,7 @@ type Database struct {
 
 // Collection gets collection from database
 func (d *Database) Collection(name string) *Collection {
-	var cp *mongo.Collection
-	cp = d.database.Collection(name)
+	cp := d.database.Collection(name)
 
 	return &Collection{
 		collection: cp,

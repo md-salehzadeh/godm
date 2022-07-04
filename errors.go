@@ -35,10 +35,7 @@ var (
 // IsErrNoDocuments check if err is no documents, both mongo-go-driver error and godm custom error
 // Deprecated, simply call if err == ErrNoSuchDocuments or if err == mongo.ErrNoDocuments
 func IsErrNoDocuments(err error) bool {
-	if err == ErrNoSuchDocuments {
-		return true
-	}
-	return false
+	return err == ErrNoSuchDocuments
 }
 
 // IsDup check if err is mongo E11000 (duplicate err)。
