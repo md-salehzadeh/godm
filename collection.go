@@ -24,7 +24,7 @@ type Collection struct {
 }
 
 // Find find by condition filter，return QueryI
-func (c *Collection) Find(ctx context.Context, filter interface{}, opts ...opts.FindOptions) QueryI {
+func (c *Collection) Find(ctx context.Context, filter bson.D, opts ...opts.FindOptions) QueryI {
 	return &Query{
 		ctx:        ctx,
 		collection: c.collection,
