@@ -45,9 +45,11 @@ func (d *Database) DropDatabase(ctx context.Context) error {
 // The opts parameter can be used to specify options for this operation (see the options.RunCmdOptions documentation).
 func (d *Database) RunCommand(ctx context.Context, runCommand interface{}, opts ...opts.RunCommandOptions) *mongo.SingleResult {
 	option := options.RunCmd()
+
 	if len(opts) > 0 && opts[0].RunCmdOptions != nil {
 		option = opts[0].RunCmdOptions
 	}
+
 	return d.database.RunCommand(ctx, runCommand, option)
 }
 
@@ -59,10 +61,12 @@ func (d *Database) RunCommand(ctx context.Context, runCommand interface{}, opts 
 // documentation).
 func (db *Database) CreateCollection(ctx context.Context, name string, opts ...opts.CreateCollectionOptions) error {
 	var option = make([]*options.CreateCollectionOptions, 0, len(opts))
+
 	for _, opt := range opts {
 		if opt.CreateCollectionOptions != nil {
 			option = append(option, opt.CreateCollectionOptions)
 		}
 	}
+
 	return db.database.CreateCollection(ctx, name, option...)
 }

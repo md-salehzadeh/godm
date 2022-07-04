@@ -28,13 +28,17 @@ type Session struct {
 //- If the ctx parameter already has a Session attached to it, it will be replaced by this session.
 func (s *Session) StartTransaction(ctx context.Context, cb func(sessCtx context.Context) (interface{}, error), opts ...*opts.TransactionOptions) (interface{}, error) {
 	transactionOpts := options.Transaction()
+
 	if len(opts) > 0 && opts[0].TransactionOptions != nil {
 		transactionOpts = opts[0].TransactionOptions
 	}
+
 	result, err := s.session.WithTransaction(ctx, wrapperCustomCb(cb), transactionOpts)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
@@ -53,9 +57,11 @@ func (s *Session) AbortTransaction(ctx context.Context) error {
 func wrapperCustomCb(cb func(ctx context.Context) (interface{}, error)) func(sessCtx mongo.SessionContext) (interface{}, error) {
 	return func(sessCtx mongo.SessionContext) (interface{}, error) {
 		result, err := cb(sessCtx)
+
 		if err == ErrTransactionRetry {
 			return nil, mongo.CommandError{Labels: []string{driver.TransientTransactionError}}
 		}
+
 		return result, err
 	}
 }

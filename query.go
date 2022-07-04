@@ -35,6 +35,7 @@ type Query struct {
 func (q *Query) BatchSize(n int64) QueryI {
 	newQ := q
 	newQ.batchSize = &n
+
 	return newQ
 }
 
@@ -50,15 +51,20 @@ func (q *Query) Sort(fields ...string) QueryI {
 	}
 
 	var sorts bson.D
+
 	for _, field := range fields {
 		key, n := SplitSortField(field)
+
 		if key == "" {
 			panic("Sort: empty field name")
 		}
+
 		sorts = append(sorts, bson.E{Key: key, Value: n})
 	}
+
 	newQ := q
 	newQ.sort = sorts
+
 	return newQ
 }
 
@@ -69,6 +75,7 @@ func (q *Query) Sort(fields ...string) QueryI {
 func (q *Query) Select(projection interface{}) QueryI {
 	newQ := q
 	newQ.project = projection
+
 	return newQ
 }
 
@@ -76,6 +83,7 @@ func (q *Query) Select(projection interface{}) QueryI {
 func (q *Query) Skip(n int64) QueryI {
 	newQ := q
 	newQ.skip = &n
+
 	return newQ
 }
 
@@ -85,6 +93,7 @@ func (q *Query) Skip(n int64) QueryI {
 func (q *Query) Hint(hint interface{}) QueryI {
 	newQ := q
 	newQ.hint = hint
+
 	return newQ
 }
 
@@ -95,6 +104,7 @@ func (q *Query) Hint(hint interface{}) QueryI {
 func (q *Query) Limit(n int64) QueryI {
 	newQ := q
 	newQ.limit = &n
+
 	return newQ
 }
 
@@ -106,17 +116,21 @@ func (q *Query) One(result interface{}) error {
 			return err
 		}
 	}
+
 	opt := options.FindOne()
 
 	if q.sort != nil {
 		opt.SetSort(q.sort)
 	}
+
 	if q.project != nil {
 		opt.SetProjection(q.project)
 	}
+
 	if q.skip != nil {
 		opt.SetSkip(*q.skip)
 	}
+
 	if q.hint != nil {
 		opt.SetHint(q.hint)
 	}
@@ -126,11 +140,13 @@ func (q *Query) One(result interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	if len(q.opts) > 0 {
 		if err := middleware.Do(q.ctx, q.opts[0].QueryHook, operator.AfterQuery); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -142,22 +158,29 @@ func (q *Query) All(result interface{}) error {
 			return err
 		}
 	}
+
 	opt := options.Find()
+
 	if q.sort != nil {
 		opt.SetSort(q.sort)
 	}
+
 	if q.project != nil {
 		opt.SetProjection(q.project)
 	}
+
 	if q.limit != nil {
 		opt.SetLimit(*q.limit)
 	}
+
 	if q.skip != nil {
 		opt.SetSkip(*q.skip)
 	}
+
 	if q.hint != nil {
 		opt.SetHint(q.hint)
 	}
+
 	if q.batchSize != nil {
 		opt.SetBatchSize(int32(*q.batchSize))
 	}
@@ -172,15 +195,19 @@ func (q *Query) All(result interface{}) error {
 		cursor: cursor,
 		err:    err,
 	}
+
 	err = c.All(result)
+
 	if err != nil {
 		return err
 	}
+
 	if len(q.opts) > 0 {
 		if err := middleware.Do(q.ctx, q.opts[0].QueryHook, operator.AfterQuery); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -191,6 +218,7 @@ func (q *Query) Count() (n int64, err error) {
 	if q.limit != nil {
 		opt.SetLimit(*q.limit)
 	}
+
 	if q.skip != nil {
 		opt.SetSkip(*q.skip)
 	}
@@ -210,29 +238,40 @@ func (q *Query) Distinct(key string, result interface{}) error {
 	}
 
 	resultElmVal := resultVal.Elem()
+
 	if resultElmVal.Kind() != reflect.Interface && resultElmVal.Kind() != reflect.Slice {
 		return ErrQueryNotSliceType
 	}
 
 	opt := options.Distinct()
+
 	res, err := q.collection.Distinct(q.ctx, key, q.filter, opt)
+
 	if err != nil {
 		return err
 	}
+
 	registry := q.registry
+
 	if registry == nil {
 		registry = bson.DefaultRegistry
 	}
+
 	valueType, valueBytes, err_ := bson.MarshalValueWithRegistry(registry, res)
+
 	if err_ != nil {
 		fmt.Printf("bson.MarshalValue err: %+v\n", err_)
+
 		return err_
 	}
 
 	rawValue := bson.RawValue{Type: valueType, Value: valueBytes}
+
 	err = rawValue.Unmarshal(result)
+
 	if err != nil {
 		fmt.Printf("rawValue.Unmarshal err: %+v\n", err)
+
 		return ErrQueryResultTypeInconsistent
 	}
 
@@ -247,12 +286,15 @@ func (q *Query) Cursor() CursorI {
 	if q.sort != nil {
 		opt.SetSort(q.sort)
 	}
+
 	if q.project != nil {
 		opt.SetProjection(q.project)
 	}
+
 	if q.limit != nil {
 		opt.SetLimit(*q.limit)
 	}
+
 	if q.skip != nil {
 		opt.SetSkip(*q.skip)
 	}
@@ -263,7 +305,9 @@ func (q *Query) Cursor() CursorI {
 
 	var err error
 	var cur *mongo.Cursor
+
 	cur, err = q.collection.Find(q.ctx, q.filter, opt)
+
 	return &Cursor{
 		ctx:    q.ctx,
 		cursor: cur,
@@ -309,9 +353,11 @@ func (q *Query) Apply(change Change, result interface{}) error {
 // reference: https://docs.mongodb.com/manual/reference/method/db.collection.findOneAndDelete/
 func (q *Query) findOneAndDelete(change Change, result interface{}) error {
 	opts := options.FindOneAndDelete()
+
 	if q.sort != nil {
 		opts.SetSort(q.sort)
 	}
+
 	if q.project != nil {
 		opts.SetProjection(q.project)
 	}
@@ -323,20 +369,25 @@ func (q *Query) findOneAndDelete(change Change, result interface{}) error {
 // reference: https://docs.mongodb.com/manual/reference/method/db.collection.findOneAndReplace/
 func (q *Query) findOneAndReplace(change Change, result interface{}) error {
 	opts := options.FindOneAndReplace()
+
 	if q.sort != nil {
 		opts.SetSort(q.sort)
 	}
+
 	if q.project != nil {
 		opts.SetProjection(q.project)
 	}
+
 	if change.Upsert {
 		opts.SetUpsert(change.Upsert)
 	}
+
 	if change.ReturnNew {
 		opts.SetReturnDocument(options.After)
 	}
 
 	err := q.collection.FindOneAndReplace(q.ctx, q.filter, change.Update, opts).Decode(result)
+
 	if change.Upsert && !change.ReturnNew && err == mongo.ErrNoDocuments {
 		return nil
 	}
@@ -348,20 +399,25 @@ func (q *Query) findOneAndReplace(change Change, result interface{}) error {
 // reference: https://docs.mongodb.com/manual/reference/method/db.collection.findOneAndUpdate/
 func (q *Query) findOneAndUpdate(change Change, result interface{}) error {
 	opts := options.FindOneAndUpdate()
+
 	if q.sort != nil {
 		opts.SetSort(q.sort)
 	}
+
 	if q.project != nil {
 		opts.SetProjection(q.project)
 	}
+
 	if change.Upsert {
 		opts.SetUpsert(change.Upsert)
 	}
+
 	if change.ReturnNew {
 		opts.SetReturnDocument(options.After)
 	}
 
 	err := q.collection.FindOneAndUpdate(q.ctx, q.filter, change.Update, opts).Decode(result)
+
 	if change.Upsert && !change.ReturnNew && err == mongo.ErrNoDocuments {
 		return nil
 	}

@@ -53,14 +53,19 @@ func CompareVersions(v1 string, v2 string) (int, error) {
 
 	for i := 0; i < int(math.Min(float64(len(n1)), float64(len(n2)))); i++ {
 		i1, err := strconv.Atoi(n1[i])
+
 		if err != nil {
 			return 0, err
 		}
+
 		i2, err := strconv.Atoi(n2[i])
+
 		if err != nil {
 			return 0, err
 		}
+
 		difference := i1 - i2
+
 		if difference != 0 {
 			return difference, nil
 		}

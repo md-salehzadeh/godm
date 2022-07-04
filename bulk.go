@@ -67,33 +67,41 @@ func (c *Collection) Bulk() *Bulk {
 // Default is ordered.
 func (b *Bulk) SetOrdered(ordered bool) *Bulk {
 	b.ordered = &ordered
+
 	return b
 }
 
 // InsertOne queues an InsertOne operation for bulk execution.
 func (b *Bulk) InsertOne(doc interface{}) *Bulk {
 	wm := mongo.NewInsertOneModel().SetDocument(doc)
+
 	b.queue = append(b.queue, wm)
+
 	return b
 }
 
 // Remove queues a Remove operation for bulk execution.
 func (b *Bulk) Remove(filter interface{}) *Bulk {
 	wm := mongo.NewDeleteOneModel().SetFilter(filter)
+
 	b.queue = append(b.queue, wm)
+
 	return b
 }
 
 // RemoveId queues a RemoveId operation for bulk execution.
 func (b *Bulk) RemoveId(id interface{}) *Bulk {
 	b.Remove(bson.M{"_id": id})
+
 	return b
 }
 
 // RemoveAll queues a RemoveAll operation for bulk execution.
 func (b *Bulk) RemoveAll(filter interface{}) *Bulk {
 	wm := mongo.NewDeleteManyModel().SetFilter(filter)
+
 	b.queue = append(b.queue, wm)
+
 	return b
 }
 
@@ -101,7 +109,9 @@ func (b *Bulk) RemoveAll(filter interface{}) *Bulk {
 // The replacement should be document without operator
 func (b *Bulk) Upsert(filter interface{}, replacement interface{}) *Bulk {
 	wm := mongo.NewReplaceOneModel().SetFilter(filter).SetReplacement(replacement).SetUpsert(true)
+
 	b.queue = append(b.queue, wm)
+
 	return b
 }
 
@@ -109,6 +119,7 @@ func (b *Bulk) Upsert(filter interface{}, replacement interface{}) *Bulk {
 // The replacement should be document without operator
 func (b *Bulk) UpsertId(id interface{}, replacement interface{}) *Bulk {
 	b.Upsert(bson.M{"_id": id}, replacement)
+
 	return b
 }
 
@@ -116,7 +127,9 @@ func (b *Bulk) UpsertId(id interface{}, replacement interface{}) *Bulk {
 // The update should contain operator
 func (b *Bulk) UpdateOne(filter interface{}, update interface{}) *Bulk {
 	wm := mongo.NewUpdateOneModel().SetFilter(filter).SetUpdate(update)
+
 	b.queue = append(b.queue, wm)
+
 	return b
 }
 
@@ -124,6 +137,7 @@ func (b *Bulk) UpdateOne(filter interface{}, update interface{}) *Bulk {
 // The update should contain operator
 func (b *Bulk) UpdateId(id interface{}, update interface{}) *Bulk {
 	b.UpdateOne(bson.M{"_id": id}, update)
+
 	return b
 }
 
@@ -131,7 +145,9 @@ func (b *Bulk) UpdateId(id interface{}, update interface{}) *Bulk {
 // The update should contain operator
 func (b *Bulk) UpdateAll(filter interface{}, update interface{}) *Bulk {
 	wm := mongo.NewUpdateManyModel().SetFilter(filter).SetUpdate(update)
+
 	b.queue = append(b.queue, wm)
+
 	return b
 }
 
@@ -144,7 +160,9 @@ func (b *Bulk) Run(ctx context.Context) (*BulkResult, error) {
 	opts := options.BulkWriteOptions{
 		Ordered: b.ordered,
 	}
+
 	result, err := b.coll.collection.BulkWrite(ctx, b.queue, &opts)
+
 	if err != nil {
 		// In original mgo, queue is not reset in case of error.
 		return nil, err

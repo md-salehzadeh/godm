@@ -1,7 +1,6 @@
 package godm
 
 // CollectionI
-// 集合操作接口
 //type CollectionI interface {
 //	Find(filter interface{}) QueryI
 //	InsertOne(doc interface{}) (*mongo.InsertOneResult, error)

@@ -39,28 +39,37 @@ func (c *Collection) Find(ctx context.Context, filter interface{}, opts ...opts.
 // Reference: https://docs.mongodb.com/manual/reference/command/insert/
 func (c *Collection) InsertOne(ctx context.Context, doc interface{}, opts ...opts.InsertOneOptions) (result *InsertOneResult, err error) {
 	h := doc
+
 	insertOneOpts := options.InsertOne()
+
 	if len(opts) > 0 {
 		if opts[0].InsertOneOptions != nil {
 			insertOneOpts = opts[0].InsertOneOptions
 		}
+
 		if opts[0].InsertHook != nil {
 			h = opts[0].InsertHook
 		}
 	}
+
 	if err = middleware.Do(ctx, doc, operator.BeforeInsert, h); err != nil {
 		return
 	}
+
 	res, err := c.collection.InsertOne(ctx, doc, insertOneOpts)
+
 	if res != nil {
 		result = &InsertOneResult{InsertedID: res.InsertedID}
 	}
+
 	if err != nil {
 		return
 	}
+
 	if err = middleware.Do(ctx, doc, operator.AfterInsert, h); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -69,33 +78,43 @@ func (c *Collection) InsertOne(ctx context.Context, doc interface{}, opts ...opt
 // Reference: https://docs.mongodb.com/manual/reference/command/insert/
 func (c *Collection) InsertMany(ctx context.Context, docs interface{}, opts ...opts.InsertManyOptions) (result *InsertManyResult, err error) {
 	h := docs
+
 	insertManyOpts := options.InsertMany()
+
 	if len(opts) > 0 {
 		if opts[0].InsertManyOptions != nil {
 			insertManyOpts = opts[0].InsertManyOptions
 		}
+
 		if opts[0].InsertHook != nil {
 			h = opts[0].InsertHook
 		}
 	}
+
 	if err = middleware.Do(ctx, docs, operator.BeforeInsert, h); err != nil {
 		return
 	}
+
 	sDocs := interfaceToSliceInterface(docs)
+
 	if sDocs == nil {
 		return nil, ErrNotValidSliceToInsert
 	}
 
 	res, err := c.collection.InsertMany(ctx, sDocs, insertManyOpts)
+
 	if res != nil {
 		result = &InsertManyResult{InsertedIDs: res.InsertedIDs}
 	}
+
 	if err != nil {
 		return
 	}
+
 	if err = middleware.Do(ctx, docs, operator.AfterInsert, h); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -104,14 +123,19 @@ func interfaceToSliceInterface(docs interface{}) []interface{} {
 	if reflect.Slice != reflect.TypeOf(docs).Kind() {
 		return nil
 	}
+
 	s := reflect.ValueOf(docs)
+
 	if s.Len() == 0 {
 		return nil
 	}
+
 	var sDocs []interface{}
+
 	for i := 0; i < s.Len(); i++ {
 		sDocs = append(sDocs, s.Index(i).Interface())
 	}
+
 	return sDocs
 }
 
@@ -123,17 +147,21 @@ func interfaceToSliceInterface(docs interface{}) []interface{} {
 // Otherwise, "the (immutable) field '_id' altered" error happens.
 func (c *Collection) Upsert(ctx context.Context, filter interface{}, replacement interface{}, opts ...opts.UpsertOptions) (result *UpdateResult, err error) {
 	h := replacement
+
 	officialOpts := options.Replace().SetUpsert(true)
 
 	if len(opts) > 0 {
 		if opts[0].ReplaceOptions != nil {
 			opts[0].ReplaceOptions.SetUpsert(true)
+
 			officialOpts = opts[0].ReplaceOptions
 		}
+
 		if opts[0].UpsertHook != nil {
 			h = opts[0].UpsertHook
 		}
 	}
+
 	if err = middleware.Do(ctx, replacement, operator.BeforeUpsert, h); err != nil {
 		return
 	}
@@ -143,12 +171,15 @@ func (c *Collection) Upsert(ctx context.Context, filter interface{}, replacement
 	if res != nil {
 		result = translateUpdateResult(res)
 	}
+
 	if err != nil {
 		return
 	}
+
 	if err = middleware.Do(ctx, replacement, operator.AfterUpsert, h); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -158,30 +189,39 @@ func (c *Collection) Upsert(ctx context.Context, filter interface{}, replacement
 // Reference: https://docs.mongodb.com/manual/reference/operator/update/
 func (c *Collection) UpsertId(ctx context.Context, id interface{}, replacement interface{}, opts ...opts.UpsertOptions) (result *UpdateResult, err error) {
 	h := replacement
+
 	officialOpts := options.Replace().SetUpsert(true)
 
 	if len(opts) > 0 {
 		if opts[0].ReplaceOptions != nil {
 			opts[0].ReplaceOptions.SetUpsert(true)
+
 			officialOpts = opts[0].ReplaceOptions
 		}
+
 		if opts[0].UpsertHook != nil {
 			h = opts[0].UpsertHook
 		}
 	}
+
 	if err = middleware.Do(ctx, replacement, operator.BeforeUpsert, h); err != nil {
 		return
 	}
+
 	res, err := c.collection.ReplaceOne(ctx, bson.M{"_id": id}, replacement, officialOpts)
+
 	if res != nil {
 		result = translateUpdateResult(res)
 	}
+
 	if err != nil {
 		return
 	}
+
 	if err = middleware.Do(ctx, replacement, operator.AfterUpsert, h); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -194,6 +234,7 @@ func (c *Collection) UpdateOne(ctx context.Context, filter interface{}, update i
 		if opts[0].UpdateOptions != nil {
 			updateOpts = opts[0].UpdateOptions
 		}
+
 		if opts[0].UpdateHook != nil {
 			if err = middleware.Do(ctx, opts[0].UpdateHook, operator.BeforeUpdate); err != nil {
 				return
@@ -202,17 +243,21 @@ func (c *Collection) UpdateOne(ctx context.Context, filter interface{}, update i
 	}
 
 	res, err := c.collection.UpdateOne(ctx, filter, update, updateOpts)
+
 	if res != nil && res.MatchedCount == 0 {
 		err = ErrNoSuchDocuments
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if len(opts) > 0 && opts[0].UpdateHook != nil {
 		if err = middleware.Do(ctx, opts[0].UpdateHook, operator.AfterUpdate); err != nil {
 			return
 		}
 	}
+
 	return err
 }
 
@@ -225,6 +270,7 @@ func (c *Collection) UpdateId(ctx context.Context, id interface{}, update interf
 		if opts[0].UpdateOptions != nil {
 			updateOpts = opts[0].UpdateOptions
 		}
+
 		if opts[0].UpdateHook != nil {
 			if err = middleware.Do(ctx, opts[0].UpdateHook, operator.BeforeUpdate); err != nil {
 				return
@@ -233,17 +279,21 @@ func (c *Collection) UpdateId(ctx context.Context, id interface{}, update interf
 	}
 
 	res, err := c.collection.UpdateOne(ctx, bson.M{"_id": id}, update, updateOpts)
+
 	if res != nil && res.MatchedCount == 0 {
 		err = ErrNoSuchDocuments
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if len(opts) > 0 && opts[0].UpdateHook != nil {
 		if err = middleware.Do(ctx, opts[0].UpdateHook, operator.AfterUpdate); err != nil {
 			return
 		}
 	}
+
 	return err
 }
 
@@ -252,28 +302,35 @@ func (c *Collection) UpdateId(ctx context.Context, id interface{}, update interf
 // Reference: https://docs.mongodb.com/manual/reference/operator/update/
 func (c *Collection) UpdateAll(ctx context.Context, filter interface{}, update interface{}, opts ...opts.UpdateOptions) (result *UpdateResult, err error) {
 	updateOpts := options.Update()
+
 	if len(opts) > 0 {
 		if opts[0].UpdateOptions != nil {
 			updateOpts = opts[0].UpdateOptions
 		}
+
 		if opts[0].UpdateHook != nil {
 			if err = middleware.Do(ctx, opts[0].UpdateHook, operator.BeforeUpdate); err != nil {
 				return
 			}
 		}
 	}
+
 	res, err := c.collection.UpdateMany(ctx, filter, update, updateOpts)
+
 	if res != nil {
 		result = translateUpdateResult(res)
 	}
+
 	if err != nil {
 		return
 	}
+
 	if len(opts) > 0 && opts[0].UpdateHook != nil {
 		if err = middleware.Do(ctx, opts[0].UpdateHook, operator.AfterUpdate); err != nil {
 			return
 		}
 	}
+
 	return
 }
 
@@ -282,26 +339,33 @@ func (c *Collection) UpdateAll(ctx context.Context, filter interface{}, update i
 // Expect type of the doc is the define of user's document
 func (c *Collection) ReplaceOne(ctx context.Context, filter interface{}, doc interface{}, opts ...opts.ReplaceOptions) (err error) {
 	h := doc
+
 	replaceOpts := options.Replace()
 
 	if len(opts) > 0 {
 		if opts[0].ReplaceOptions != nil {
 			replaceOpts = opts[0].ReplaceOptions
 		}
+
 		if opts[0].UpdateHook != nil {
 			h = opts[0].UpdateHook
 		}
 	}
+
 	if err = middleware.Do(ctx, doc, operator.BeforeReplace, h); err != nil {
 		return
 	}
+
 	res, err := c.collection.ReplaceOne(ctx, filter, doc, replaceOpts)
+
 	if res != nil && res.MatchedCount == 0 {
 		err = ErrNoSuchDocuments
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if err = middleware.Do(ctx, doc, operator.AfterReplace, h); err != nil {
 		return
 	}
@@ -314,48 +378,60 @@ func (c *Collection) ReplaceOne(ctx context.Context, filter interface{}, doc int
 // Reference: https://docs.mongodb.com/manual/reference/command/delete/
 func (c *Collection) Remove(ctx context.Context, filter interface{}, opts ...opts.RemoveOptions) (err error) {
 	deleteOptions := options.Delete()
+
 	if len(opts) > 0 {
 		if opts[0].DeleteOptions != nil {
 			deleteOptions = opts[0].DeleteOptions
 		}
+
 		if opts[0].RemoveHook != nil {
 			if err = middleware.Do(ctx, opts[0].RemoveHook, operator.BeforeRemove); err != nil {
 				return err
 			}
 		}
 	}
+
 	res, err := c.collection.DeleteOne(ctx, filter, deleteOptions)
+
 	if res != nil && res.DeletedCount == 0 {
 		err = ErrNoSuchDocuments
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if len(opts) > 0 && opts[0].RemoveHook != nil {
 		if err = middleware.Do(ctx, opts[0].RemoveHook, operator.AfterRemove); err != nil {
 			return err
 		}
 	}
+
 	return err
 }
 
 // RemoveId executes a delete command to delete at most one document from the collection.
 func (c *Collection) RemoveId(ctx context.Context, id interface{}, opts ...opts.RemoveOptions) (err error) {
 	deleteOptions := options.Delete()
+
 	if len(opts) > 0 {
 		if opts[0].DeleteOptions != nil {
 			deleteOptions = opts[0].DeleteOptions
 		}
+
 		if opts[0].RemoveHook != nil {
 			if err = middleware.Do(ctx, opts[0].RemoveHook, operator.BeforeRemove); err != nil {
 				return err
 			}
 		}
 	}
+
 	res, err := c.collection.DeleteOne(ctx, bson.M{"_id": id}, deleteOptions)
+
 	if res != nil && res.DeletedCount == 0 {
 		err = ErrNoSuchDocuments
 	}
+
 	if err != nil {
 		return err
 	}
@@ -365,6 +441,7 @@ func (c *Collection) RemoveId(ctx context.Context, id interface{}, opts ...opts.
 			return err
 		}
 	}
+
 	return err
 }
 
@@ -373,28 +450,35 @@ func (c *Collection) RemoveId(ctx context.Context, id interface{}, opts ...opts.
 // Reference: https://docs.mongodb.com/manual/reference/command/delete/
 func (c *Collection) RemoveAll(ctx context.Context, filter interface{}, opts ...opts.RemoveOptions) (result *DeleteResult, err error) {
 	deleteOptions := options.Delete()
+
 	if len(opts) > 0 {
 		if opts[0].DeleteOptions != nil {
 			deleteOptions = opts[0].DeleteOptions
 		}
+
 		if opts[0].RemoveHook != nil {
 			if err = middleware.Do(ctx, opts[0].RemoveHook, operator.BeforeRemove); err != nil {
 				return
 			}
 		}
 	}
+
 	res, err := c.collection.DeleteMany(ctx, filter, deleteOptions)
+
 	if res != nil {
 		result = &DeleteResult{DeletedCount: res.DeletedCount}
 	}
+
 	if err != nil {
 		return
 	}
+
 	if len(opts) > 0 && opts[0].RemoveHook != nil {
 		if err = middleware.Do(ctx, opts[0].RemoveHook, operator.AfterRemove); err != nil {
 			return
 		}
 	}
+
 	return
 }
 
@@ -414,6 +498,7 @@ func (c *Collection) Aggregate(ctx context.Context, pipeline interface{}, opts .
 // Reference: https://docs.mongodb.com/manual/reference/command/createIndexes/
 func (c *Collection) ensureIndex(ctx context.Context, indexes []opts.IndexModel) error {
 	var indexModels []mongo.IndexModel
+
 	for _, idx := range indexes {
 		var model mongo.IndexModel
 		var keysDoc bsonx.Doc
@@ -423,6 +508,7 @@ func (c *Collection) ensureIndex(ctx context.Context, indexes []opts.IndexModel)
 
 			keysDoc = keysDoc.Append(key, bsonx.Int32(n))
 		}
+
 		model = mongo.IndexModel{
 			Keys:    keysDoc,
 			Options: idx.IndexOptions,
@@ -436,10 +522,13 @@ func (c *Collection) ensureIndex(ctx context.Context, indexes []opts.IndexModel)
 	}
 
 	res, err := c.collection.Indexes().CreateMany(ctx, indexModels)
+
 	if err != nil || len(res) == 0 {
 		fmt.Println("<MongoDB.C>: ", c.collection.Name(), " Index: ", indexes, " error: ", err, "res: ", res)
+
 		return err
 	}
+
 	return nil
 }
 
@@ -452,6 +541,7 @@ func (c *Collection) ensureIndex(ctx context.Context, indexes []opts.IndexModel)
 func (c *Collection) EnsureIndexes(ctx context.Context, uniques []string, indexes []string) (err error) {
 	var uniqueModel []opts.IndexModel
 	var indexesModel []opts.IndexModel
+
 	for _, v := range uniques {
 		vv := strings.Split(v, ",")
 		indexOpts := options.Index()
@@ -459,6 +549,7 @@ func (c *Collection) EnsureIndexes(ctx context.Context, uniques []string, indexe
 		model := opts.IndexModel{Key: vv, IndexOptions: indexOpts}
 		uniqueModel = append(uniqueModel, model)
 	}
+
 	if err = c.CreateIndexes(ctx, uniqueModel); err != nil {
 		return
 	}
@@ -468,9 +559,11 @@ func (c *Collection) EnsureIndexes(ctx context.Context, uniques []string, indexe
 		model := opts.IndexModel{Key: vv}
 		indexesModel = append(indexesModel, model)
 	}
+
 	if err = c.CreateIndexes(ctx, indexesModel); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -479,6 +572,7 @@ func (c *Collection) EnsureIndexes(ctx context.Context, uniques []string, indexe
 // If the Key in opts.IndexModel is []string{"name","-age"} means create Compound indexes: name and -age
 func (c *Collection) CreateIndexes(ctx context.Context, indexes []opts.IndexModel) (err error) {
 	err = c.ensureIndex(ctx, indexes)
+
 	return
 }
 
@@ -494,6 +588,7 @@ func (c *Collection) CreateOneIndex(ctx context.Context, index opts.IndexModel) 
 // if there is only _id field index on the collection, the function call will report an error
 func (c *Collection) DropAllIndexes(ctx context.Context) (err error) {
 	_, err = c.collection.Indexes().DropAll(ctx)
+
 	return err
 }
 
@@ -502,24 +597,30 @@ func (c *Collection) DropAllIndexes(ctx context.Context) (err error) {
 // The indexes is []string{"name","-age"} means drop Compound indexes: name and -age
 func (c *Collection) DropIndex(ctx context.Context, indexes []string) error {
 	_, err := c.collection.Indexes().DropOne(ctx, generateDroppedIndex(indexes))
+
 	if err != nil {
 		return err
 	}
+
 	return err
 }
 
 // generate indexes that store in mongo which may consist more than one index(like []string{"index1","index2"} is stored as "index1_1_index2_1")
 func generateDroppedIndex(index []string) string {
 	var res string
+
 	for _, e := range index {
 		key, sort := SplitSortField(e)
+
 		n := key + "_" + fmt.Sprint(sort)
+
 		if len(res) == 0 {
 			res = n
 		} else {
 			res += "_" + n
 		}
 	}
+
 	return res
 }
 
@@ -543,9 +644,11 @@ func (c *Collection) GetCollectionName() string {
 // https://docs.mongodb.com/manual/changeStreams/ for more information about change streams.
 func (c *Collection) Watch(ctx context.Context, pipeline interface{}, opts ...*opts.ChangeStreamOptions) (*mongo.ChangeStream, error) {
 	changeStreamOption := options.ChangeStream()
+
 	if len(opts) > 0 && opts[0].ChangeStreamOptions != nil {
 		changeStreamOption = opts[0].ChangeStreamOptions
 	}
+
 	return c.collection.Watch(ctx, pipeline, changeStreamOption)
 }
 
@@ -557,5 +660,6 @@ func translateUpdateResult(res *mongo.UpdateResult) (result *UpdateResult) {
 		UpsertedCount: res.UpsertedCount,
 		UpsertedID:    res.UpsertedID,
 	}
+
 	return
 }

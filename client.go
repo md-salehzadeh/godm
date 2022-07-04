@@ -95,12 +95,14 @@ type GodmClient struct {
 // GodmClient can operates all godm.client 、godm.database and godm.collection
 func Open(ctx context.Context, conf *Config, o ...options.ClientOptions) (cli *GodmClient, err error) {
 	client, err := NewClient(ctx, conf, o...)
+
 	if err != nil {
 		fmt.Println("new client fail", err)
 		return
 	}
 
 	db := client.Database(conf.Database)
+
 	coll := db.Collection(conf.Coll)
 
 	cli = &GodmClient{
@@ -123,36 +125,48 @@ type Client struct {
 // NewClient creates Godm MongoDB client
 func NewClient(ctx context.Context, conf *Config, o ...options.ClientOptions) (cli *Client, err error) {
 	opt, err := newConnectOpts(conf, o...)
+
 	if err != nil {
 		return nil, err
 	}
+
 	client, err := client(ctx, opt)
+
 	if err != nil {
 		fmt.Println("new client fail", err)
 		return
 	}
+
 	cli = &Client{
 		client:   client,
 		conf:     *conf,
 		registry: opt.Registry,
 	}
+
 	return
 }
 
 // client creates connection to MongoDB
 func client(ctx context.Context, opt *opts.ClientOptions) (client *mongo.Client, err error) {
 	client, err = mongo.Connect(ctx, opt)
+
 	if err != nil {
 		fmt.Println(err)
+
 		return
 	}
+
 	// half of default connect timeout
 	pCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+
 	defer cancel()
+
 	if err = client.Ping(pCtx, readpref.Primary()); err != nil {
 		fmt.Println(err)
+
 		return
 	}
+
 	return
 }
 
@@ -162,40 +176,53 @@ func client(ctx context.Context, opt *opts.ClientOptions) (client *mongo.Client,
 // - Check the validity of the configuration in the uri, while the configuration in the setter is basically not checked
 func newConnectOpts(conf *Config, o ...options.ClientOptions) (*opts.ClientOptions, error) {
 	option := opts.Client()
+
 	for _, apply := range o {
 		option = opts.MergeClientOptions(apply.ClientOptions)
 	}
+
 	if conf.ConnectTimeoutMS != nil {
 		timeoutDur := time.Duration(*conf.ConnectTimeoutMS) * time.Millisecond
-		option.SetConnectTimeout(timeoutDur)
 
+		option.SetConnectTimeout(timeoutDur)
 	}
+
 	if conf.SocketTimeoutMS != nil {
 		timeoutDur := time.Duration(*conf.SocketTimeoutMS) * time.Millisecond
+
 		option.SetSocketTimeout(timeoutDur)
 	} else {
 		option.SetSocketTimeout(300 * time.Second)
 	}
+
 	if conf.MaxPoolSize != nil {
 		option.SetMaxPoolSize(*conf.MaxPoolSize)
 	}
+
 	if conf.MinPoolSize != nil {
 		option.SetMinPoolSize(*conf.MinPoolSize)
 	}
+
 	if conf.ReadPreference != nil {
 		readPreference, err := newReadPref(*conf.ReadPreference)
+
 		if err != nil {
 			return nil, err
 		}
+
 		option.SetReadPreference(readPreference)
 	}
+
 	if conf.Auth != nil {
 		auth, err := newAuth(*conf.Auth)
+
 		if err != nil {
 			return nil, err
 		}
+
 		option.SetAuth(auth)
 	}
+
 	option.ApplyURI(conf.Uri)
 
 	return option, nil
@@ -206,81 +233,103 @@ func newAuth(auth Credential) (credential opts.Credential, err error) {
 	if auth.AuthMechanism != "" {
 		credential.AuthMechanism = auth.AuthMechanism
 	}
+
 	if auth.AuthSource != "" {
 		credential.AuthSource = auth.AuthSource
 	}
+
 	if auth.Username != "" {
 		// Validate and process the username.
 		if strings.Contains(auth.Username, "/") {
 			err = ErrNotSupportedUsername
 			return
 		}
+
 		credential.Username, err = url.QueryUnescape(auth.Username)
+
 		if err != nil {
 			err = ErrNotSupportedUsername
 			return
 		}
 	}
+
 	credential.PasswordSet = auth.PasswordSet
+
 	if auth.Password != "" {
 		if strings.Contains(auth.Password, ":") {
 			err = ErrNotSupportedPassword
 			return
 		}
+
 		if strings.Contains(auth.Password, "/") {
 			err = ErrNotSupportedPassword
 			return
 		}
+
 		credential.Password, err = url.QueryUnescape(auth.Password)
+
 		if err != nil {
 			err = ErrNotSupportedPassword
 			return
 		}
+
 		credential.Password = auth.Password
 	}
+
 	return
 }
 
 // newReadPref create readpref.ReadPref from config
 func newReadPref(pref ReadPref) (*readpref.ReadPref, error) {
 	readPrefOpts := make([]readpref.Option, 0, 1)
+
 	if pref.MaxStalenessMS != 0 {
 		readPrefOpts = append(readPrefOpts, readpref.WithMaxStaleness(time.Duration(pref.MaxStalenessMS)*time.Millisecond))
 	}
+
 	mode := readpref.PrimaryMode
+
 	if pref.Mode != 0 {
 		mode = pref.Mode
 	}
+
 	readPreference, err := readpref.New(mode, readPrefOpts...)
+
 	return readPreference, err
 }
 
 // Close closes sockets to the topology referenced by this Client.
 func (c *Client) Close(ctx context.Context) error {
 	err := c.client.Disconnect(ctx)
+
 	return err
 }
 
 // Ping confirm connection is alive
 func (c *Client) Ping(timeout int64) error {
 	var err error
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+
 	defer cancel()
 
 	if err = c.client.Ping(ctx, readpref.Primary()); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // Database create connection to database
 func (c *Client) Database(name string, options ...*options.DatabaseOptions) *Database {
 	opts := opts.Database()
+
 	if len(options) > 0 {
 		if options[0].DatabaseOptions != nil {
 			opts = options[0].DatabaseOptions
 		}
 	}
+
 	return &Database{database: c.client.Database(name, opts), registry: c.registry}
 }
 
@@ -288,10 +337,13 @@ func (c *Client) Database(name string, options ...*options.DatabaseOptions) *Dat
 // Watch out, close session after operation done
 func (c *Client) Session(opt ...*options.SessionOptions) (*Session, error) {
 	sessionOpts := opts.Session()
+
 	if len(opt) > 0 && opt[0].SessionOptions != nil {
 		sessionOpts = opt[0].SessionOptions
 	}
+
 	s, err := c.client.StartSession(sessionOpts)
+
 	return &Session{session: s}, err
 }
 
@@ -310,43 +362,54 @@ func (c *Client) DoTransaction(ctx context.Context, callback func(sessCtx contex
 	if !c.transactionAllowed() {
 		return nil, ErrTransactionNotSupported
 	}
+
 	s, err := c.Session()
+
 	if err != nil {
 		return nil, err
 	}
+
 	defer s.EndSession(ctx)
+
 	return s.StartTransaction(ctx, callback, opts...)
 }
 
 // ServerVersion get the version of mongoDB server, like 4.4.0
 func (c *Client) ServerVersion() string {
 	var buildInfo bson.Raw
-	err := c.client.Database("admin").RunCommand(
-		context.Background(),
-		bson.D{{"buildInfo", 1}},
-	).Decode(&buildInfo)
+
+	err := c.client.Database("admin").RunCommand(context.Background(), bson.D{{"buildInfo", 1}}).Decode(&buildInfo)
+
 	if err != nil {
 		fmt.Println("run command err", err)
+
 		return ""
 	}
+
 	v, err := buildInfo.LookupErr("version")
+
 	if err != nil {
 		fmt.Println("look up err", err)
+
 		return ""
 	}
+
 	return v.StringValue()
 }
 
 // transactionAllowed check if transaction is allowed
 func (c *Client) transactionAllowed() bool {
 	vr, err := CompareVersions("4.0", c.ServerVersion())
+
 	if err != nil {
 		return false
 	}
+
 	if vr > 0 {
 		fmt.Println("transaction is not supported because mongo server version is below 4.0")
 		return false
 	}
+
 	// TODO dont know why need to do `cli, err := Open(ctx, &c.conf)` in topology() to get topo,
 	// Before figure it out, we only use this function in UT
 	//topo, err := c.topology()
@@ -354,5 +417,6 @@ func (c *Client) transactionAllowed() bool {
 	//	fmt.Println("transaction is not supported because mongo server topology is single")
 	//	return false
 	//}
+
 	return true
 }
