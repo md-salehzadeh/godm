@@ -67,28 +67,25 @@ func (q *Query) Sort(fields ...string) QueryI {
 // bson.M{"age": 0} means to display other fields except age
 // When _id is not displayed and is set to 0, it will be returned to display
 func (q *Query) Select(projection interface{}) QueryI {
-	newQ := q
-	newQ.project = projection
+	q.project = projection
 
-	return newQ
+	return q
 }
 
 // Skip skip n records
 func (q *Query) Skip(n int64) QueryI {
-	newQ := q
-	newQ.skip = &n
+	q.skip = &n
 
-	return newQ
+	return q
 }
 
 // Hint sets the value for the Hint field.
 // This should either be the index name as a string or the index specification
 // as a document. The default value is nil, which means that no hint will be sent.
 func (q *Query) Hint(hint interface{}) QueryI {
-	newQ := q
-	newQ.hint = hint
+	q.hint = hint
 
-	return newQ
+	return q
 }
 
 // Limit limits the maximum number of documents found to n
@@ -96,10 +93,9 @@ func (q *Query) Hint(hint interface{}) QueryI {
 // When the limit value is less than 0, the negative limit is similar to the positive limit, but the cursor is closed after returning a single batch result.
 // Reference https://docs.mongodb.com/manual/reference/method/cursor.limit/index.html
 func (q *Query) Limit(n int64) QueryI {
-	newQ := q
-	newQ.limit = &n
+	q.limit = &n
 
-	return newQ
+	return q
 }
 
 // One query a record that meets the filter conditions
