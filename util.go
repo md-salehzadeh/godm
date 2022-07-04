@@ -19,7 +19,7 @@ func NewObjectID() primitive.ObjectID {
 	return primitive.NewObjectID()
 }
 
-// handle sort symbol: "asc"/"desc" at the end of field
+// handles sort symbol: "asc"/"desc" at the end of field
 // if "asc"， return sort as 1
 // if "desc"， return sort as -1
 func ParseSortField(field string) (key string, sort int32) {
@@ -37,6 +37,21 @@ func ParseSortField(field string) (key string, sort int32) {
 	}
 
 	return key, sort
+}
+
+// handles select symbol
+// if field has "!" at the beginning, its translated to -1 otherwise to 1
+func ParseSelectField(field string) (key string, visible int32) {
+	key = field
+	visible = 1
+
+	if len(field) != 0 && strings.HasPrefix(field, "!") {
+		key = strings.Replace(field, "!", "", -1)
+
+		visible = 0
+	}
+
+	return key, visible
 }
 
 // CompareVersions compares two version number strings (i.e. positive integers separated by

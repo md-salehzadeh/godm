@@ -18,7 +18,7 @@ import (
 type Query struct {
 	filter    interface{}
 	sort      bson.D
-	project   interface{}
+	project   bson.D
 	hint      interface{}
 	limit     *int64
 	skip      *int64
@@ -43,20 +43,16 @@ func (q *Query) BatchSize(n int64) QueryI {
 // When multiple sort fields are passed in at the same time, they are arranged in the order in which the fields are passed in.
 // For example, {"age", "name desc"}, first sort by age in ascending order, then sort by name in descending order
 func (q *Query) Sort(fields ...string) QueryI {
-	if len(fields) == 0 {
-		// A nil bson.D will not correctly serialize, but this case is no-op
-		// so an early return will do.
-		return q
-	}
+	if len(fields) > 0 {
+		for _, field := range fields {
+			key, sort := ParseSortField(field)
 
-	for _, field := range fields {
-		key, sort := ParseSortField(field)
+			if key == "" {
+				panic("Sort: empty field name")
+			}
 
-		if key == "" {
-			panic("Sort: empty field name")
+			q.sort = append(q.sort, bson.E{Key: key, Value: sort})
 		}
-
-		q.sort = append(q.sort, bson.E{Key: key, Value: sort})
 	}
 
 	return q
@@ -66,8 +62,18 @@ func (q *Query) Sort(fields ...string) QueryI {
 // Format: bson.M{"age": 1} means that only the age field is displayed
 // bson.M{"age": 0} means to display other fields except age
 // When _id is not displayed and is set to 0, it will be returned to display
-func (q *Query) Select(projection interface{}) QueryI {
-	q.project = projection
+func (q *Query) Select(fields ...string) QueryI {
+	if len(fields) > 0 {
+		for _, field := range fields {
+			key, visible := ParseSelectField(field)
+
+			if key == "" {
+				panic("Select: empty field name")
+			}
+
+			q.project = append(q.project, bson.E{Key: key, Value: visible})
+		}
+	}
 
 	return q
 }
