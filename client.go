@@ -20,6 +20,8 @@ type Config struct {
 	// URI example: [mongodb://][user:pass@]host1[:port1][,host2[:port2],...][/database][?options]
 	// URI Reference: https://docs.mongodb.com/manual/reference/connection-string/
 	Uri      string `json:"uri"`
+	Host     string `json:"host"`
+	Port     string `json:"port"`
 	Database string `json:"database"`
 	Coll     string `json:"coll"`
 	// ConnectTimeoutMS specifies a timeout that is used for creating connections to the server.
