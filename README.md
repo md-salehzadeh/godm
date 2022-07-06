@@ -42,7 +42,7 @@ Or
     )
     
     ctx := context.Background()
-    client, err := godm.NewClient(ctx, &godm.Config{Uri: "mongodb://localhost:27017"})
+    client, err := godm.Connect(ctx, &godm.Config{Uri: "mongodb://localhost:27017"})
     db := client.Database("class")
     coll := db.Collection("user")
     ```
