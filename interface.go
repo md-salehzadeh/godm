@@ -1,5 +1,7 @@
 package godm
 
+import "context"
+
 // CollectionI
 //type CollectionI interface {
 //	Find(filter interface{}) QueryI
@@ -34,6 +36,7 @@ type CursorI interface {
 
 // QueryI Query interface
 type QueryI interface {
+	setDocument(document interface{})
 	Where(filters map[string]any) QueryI
 	AndWhere(filters map[string]any) QueryI
 	OrWhere(filters map[string]any) QueryI
@@ -43,7 +46,7 @@ type QueryI interface {
 	BatchSize(n int64) QueryI
 	Limit(n int64) QueryI
 	One(result interface{}) error
-	All(result interface{}) error
+	All(ctx context.Context, result_ ...interface{}) (interface{}, error)
 	Count() (n int64, err error)
 	Distinct(key string, result interface{}) error
 	Cursor() CursorI

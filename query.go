@@ -29,6 +29,7 @@ type Query struct {
 	collection *mongo.Collection
 	opts       []gOpts.FindOptions
 	registry   *bsoncodec.Registry
+	document   interface{}
 }
 
 // BatchSize sets the value for the BatchSize field.
@@ -37,6 +38,10 @@ func (q *Query) BatchSize(n int64) QueryI {
 	q.batchSize = &n
 
 	return q
+}
+
+func (q *Query) setDocument(document interface{}) {
+	q.document = document
 }
 
 func makeWhere(filters map[string]any) bson.D {
@@ -254,46 +259,51 @@ func (q *Query) One(result interface{}) error {
 
 // All query multiple records that meet the filter conditions
 // The static type of result must be a slice pointer
-func (q *Query) All(result interface{}) error {
+func (q *Query) All(ctx context.Context, result_ ...interface{}) (result interface{}, err error) {
+	if len(result_) > 0 {
+		result = result_[0]
+	} else if q.document != nil {
+		result = q.document
+	}
+
 	if len(q.opts) > 0 {
-		if err := middleware.Do(q.ctx, q.opts[0].QueryHook, operator.BeforeQuery); err != nil {
-			return err
+		if err = middleware.Do(ctx, q.opts[0].QueryHook, operator.BeforeQuery); err != nil {
+			return
 		}
 	}
 
-	opt := options.Find()
+	opts := options.Find()
 
 	if q.sort != nil {
-		opt.SetSort(q.sort)
+		opts.SetSort(q.sort)
 	}
 
 	if q.project != nil {
-		opt.SetProjection(q.project)
+		opts.SetProjection(q.project)
 	}
 
 	if q.limit != nil {
-		opt.SetLimit(*q.limit)
+		opts.SetLimit(*q.limit)
 	}
 
 	if q.skip != nil {
-		opt.SetSkip(*q.skip)
+		opts.SetSkip(*q.skip)
 	}
 
 	if q.hint != nil {
-		opt.SetHint(q.hint)
+		opts.SetHint(q.hint)
 	}
 
 	if q.batchSize != nil {
-		opt.SetBatchSize(int32(*q.batchSize))
+		opts.SetBatchSize(int32(*q.batchSize))
 	}
 
-	var err error
 	var cursor *mongo.Cursor
 
-	cursor, err = q.collection.Find(q.ctx, q.filter, opt)
+	cursor, err = q.collection.Find(ctx, q.filter, opts)
 
 	c := Cursor{
-		ctx:    q.ctx,
+		ctx:    ctx,
 		cursor: cursor,
 		err:    err,
 	}
@@ -301,16 +311,16 @@ func (q *Query) All(result interface{}) error {
 	err = c.All(result)
 
 	if err != nil {
-		return err
+		return
 	}
 
 	if len(q.opts) > 0 {
-		if err := middleware.Do(q.ctx, q.opts[0].QueryHook, operator.AfterQuery); err != nil {
-			return err
+		if err = middleware.Do(ctx, q.opts[0].QueryHook, operator.AfterQuery); err != nil {
+			return
 		}
 	}
 
-	return nil
+	return
 }
 
 // Count count the number of eligible entries
