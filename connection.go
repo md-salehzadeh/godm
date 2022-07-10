@@ -193,7 +193,13 @@ func newConnectOpts(conf *Config, _opts ...options.ClientOptions) (*opts.ClientO
 		options.SetAuth(auth)
 	}
 
-	options.ApplyURI(conf.Uri)
+	uri := conf.Uri
+
+	if uri == "" {
+		uri = fmt.Sprintf("mongodb://%s:%s", conf.Host, conf.Port)
+	}
+
+	options.ApplyURI(uri)
 
 	return options, nil
 }
