@@ -112,9 +112,11 @@ func Connect(ctx context.Context, conf *Config, _opts ...options.ClientOptions) 
 	}
 
 	connection := &Connection{
-		Client:   client,
-		Config:   *conf,
-		registry: options.Registry,
+		Client:        client,
+		Config:        *conf,
+		registry:      options.Registry,
+		modelRegistry: make(map[string]*Model),
+		typeRegistry:  make(map[string]reflect.Type),
 	}
 
 	return connection, nil
